@@ -1,0 +1,402 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+env:
+  NODE_VERSION: '18'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # 代码质量检查
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: ESLint
+      run: npm run lint
+
+    - name: Prettier check
+      run: npm run format:check
+
+    - name: TypeScript type check
+      run: npm run type-check
+
+  # 单元测试
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Generate Prisma client
+      run: npx prisma generate
+
+    - name: Run unit tests
+      run: npm run test:ci
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage/lcov.info
+        fail_ci_if_error: false
+        flags: unittests
+        name: codecov-umbrella
+
+  # E2E测试
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: personal_blog_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install Playwright
+      run: npx playwright install --with-deps
+
+    - name: Generate Prisma client
+      run: npx prisma generate
+
+    - name: Run database migrations
+      run: npx prisma migrate deploy
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/personal_blog_test
+
+    - name: Build application
+      run: npm run build
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/personal_blog_test
+        NEXTAUTH_SECRET: test-secret
+        NEXTAUTH_URL: http://localhost:3000
+
+    - name: Run E2E tests
+      run: npm run test:e2e
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/personal_blog_test
+        NEXTAUTH_SECRET: test-secret
+        NEXTAUTH_URL: http://localhost:3000
+
+    - name: Upload E2E test results
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 30
+
+  # 安全扫描
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run npm audit
+      run: npm audit --audit-level=moderate
+
+    - name: Run Snyk security scan
+      uses: snyk/actions/node@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
+
+  # Docker镜像构建
+  build-image:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [code-quality, unit-tests, e2e-tests]
+    if: github.event_name != 'pull_request'
+
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+      image-tag: ${{ steps.meta.outputs.tags }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha,prefix={{branch}}-
+
+    - name: Build and push Docker image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.prod
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64,linux/arm64
+
+  # 部署到开发环境
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    needs: build-image
+    if: github.ref == 'refs/heads/develop'
+    environment: development
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to development server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.DEV_HOST }}
+        username: ${{ secrets.DEV_USERNAME }}
+        key: ${{ secrets.DEV_SSH_KEY }}
+        script: |
+          cd /opt/personal-blog
+          git pull origin develop
+          docker-compose -f docker-compose.yml down
+          docker-compose -f docker-compose.yml pull
+          docker-compose -f docker-compose.yml up -d
+          docker system prune -f
+
+    - name: Verify deployment
+      run: |
+        sleep 30
+        curl -f ${{ secrets.DEV_URL }}/api/health
+
+  # 部署到生产环境
+  deploy-prod:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build-image
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Create deployment notification
+      uses: 8398a7/action-slack@v3
+      with:
+        status: pending
+        channel: '#deployments'
+        text: '🚀 开始部署到生产环境...'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+    - name: Deploy to production server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PROD_HOST }}
+        username: ${{ secrets.PROD_USERNAME }}
+        key: ${{ secrets.PROD_SSH_KEY }}
+        script: |
+          cd /opt/personal-blog
+          git pull origin main
+
+          # 创建部署前备份
+          ./scripts/deployment/backup.sh --db-only
+
+          # 停止旧服务
+          docker-compose -f docker-compose.prod.yml down
+
+          # 拉取新镜像
+          docker-compose -f docker-compose.prod.yml pull
+
+          # 启动新服务
+          docker-compose -f docker-compose.prod.yml up -d
+
+          # 清理旧镜像
+          docker system prune -f
+
+          # 等待服务启动
+          sleep 60
+
+          # 健康检查
+          ./scripts/deployment/monitor.sh --once
+
+    - name: Verify production deployment
+      run: |
+        sleep 30
+        curl -f ${{ secrets.PROD_URL }}/api/health
+
+    - name: Create deployment success notification
+      uses: 8398a7/action-slack@v3
+      if: success()
+      with:
+        status: success
+        channel: '#deployments'
+        text: '✅ 生产环境部署成功!'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+    - name: Create deployment failure notification
+      uses: 8398a7/action-slack@v3
+      if: failure()
+      with:
+        status: failure
+        channel: '#deployments'
+        text: '❌ 生产环境部署失败!'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  # 性能测试
+  performance-test:
+    name: Performance Test
+    runs-on: ubuntu-latest
+    needs: deploy-prod
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Install Lighthouse CI
+      run: npm install -g @lhci/cli@0.12.x
+
+    - name: Run Lighthouse CI
+      run: lhci autorun
+      env:
+        LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+        LHCI_SERVER_URL: ${{ secrets.LHCI_SERVER_URL }}
+        LHCI_BUILD_CONTEXT__CURRENT_BRANCH: ${{ github.ref_name }}
+        LHCI_BUILD_CONTEXT__GITHUB_REPO_SLUG: ${{ github.repository }}
+        LHCI_BUILD_CONTEXT__GITHUB_COMMIT_SHA: ${{ github.sha }}
+
+  # 通知部署结果
+  notify:
+    name: Notify Deployment Result
+    runs-on: ubuntu-latest
+    needs: [deploy-prod, performance-test]
+    if: always()
+
+    steps:
+    - name: Send email notification
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "部署通知 - ${{ github.repository }}"
+        body: |
+          部署状态: ${{ needs.deploy-prod.result }}
+          提交: ${{ github.sha }}
+          分支: ${{ github.ref_name }}
+          作者: ${{ github.actor }}
+          时间: ${{ github.event.head_commit.timestamp }}
+        to: ${{ secrets.NOTIFICATION_EMAIL }}
+        from: GitHub Actions
+
+# 工作流配置
+permissions:
+  contents: read
+  packages: write
+  deployments: write
+  id-token: write
+
+# 并发控制
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}

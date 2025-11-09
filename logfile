@@ -1,0 +1,130 @@
+2025-11-09 23:16:30.247 CST [91994] LOG:  starting PostgreSQL 14.18 (Homebrew) on x86_64-apple-darwin23.6.0, compiled by Apple clang version 16.0.0 (clang-1600.0.26.6), 64-bit
+2025-11-09 23:16:30.267 CST [91994] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2025-11-09 23:16:30.268 CST [91994] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2025-11-09 23:16:30.275 CST [91995] LOG:  database system was shut down at 2025-11-09 23:16:27 CST
+2025-11-09 23:16:30.290 CST [91994] LOG:  database system is ready to accept connections
+2025-11-09 23:16:58.266 CST [94054] FATAL:  role "postgres" does not exist
+2025-11-09 23:17:30.098 CST [98771] ERROR:  relation "_prisma_migrations" does not exist at character 126
+2025-11-09 23:17:30.098 CST [98771] STATEMENT:  SELECT "id", "checksum", "finished_at", "migration_name", "logs", "rolled_back_at", "started_at", "applied_steps_count" FROM "_prisma_migrations" ORDER BY "started_at" ASC
+2025-11-09 23:17:30.393 CST [98895] FATAL:  terminating connection due to administrator command
+2025-11-09 23:17:30.590 CST [98978] FATAL:  terminating connection due to administrator command
+2025-11-09 23:17:30.775 CST [99007] FATAL:  terminating connection due to administrator command
+2025-11-09 23:18:23.837 CST [21395] ERROR:  column "authorid" does not exist
+2025-11-09 23:18:23.837 CST [21395] STATEMENT:  CREATE INDEX IF NOT EXISTS idx_posts_author_published ON posts(authorId, published) WHERE published = true;
+2025-11-09 23:18:23.838 CST [21395] ERROR:  column "publishedat" does not exist
+2025-11-09 23:18:23.838 CST [21395] STATEMENT:  CREATE INDEX IF NOT EXISTS idx_posts_published_date ON posts(published, publishedAt DESC) WHERE published = true;
+2025-11-09 23:18:23.838 CST [21395] ERROR:  column "postid" does not exist
+2025-11-09 23:18:23.838 CST [21395] STATEMENT:  CREATE INDEX IF NOT EXISTS idx_comments_post_created ON comments(postId, createdAt DESC);
+2025-11-09 23:18:23.838 CST [21395] ERROR:  column "postid" does not exist
+2025-11-09 23:18:23.838 CST [21395] STATEMENT:  CREATE INDEX IF NOT EXISTS idx_likes_post_created ON likes(postId, createdAt DESC);
+2025-11-09 23:18:23.838 CST [21395] ERROR:  column "postid" does not exist
+2025-11-09 23:18:23.838 CST [21395] STATEMENT:  CREATE INDEX IF NOT EXISTS idx_views_post_created ON views(postId, createdAt DESC);
+2025-11-09 23:18:23.838 CST [21395] ERROR:  column "userid" does not exist
+2025-11-09 23:18:23.838 CST [21395] STATEMENT:  CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(userId, "read", createdAt DESC);
+2025-11-09 23:18:23.838 CST [21395] ERROR:  column "userid" does not exist
+2025-11-09 23:18:23.838 CST [21395] STATEMENT:  CREATE INDEX IF NOT EXISTS idx_notifications_user_type ON notifications(userId, type, createdAt DESC);
+2025-11-09 23:18:23.838 CST [21395] ERROR:  column "userid" does not exist
+2025-11-09 23:18:23.838 CST [21395] STATEMENT:  CREATE INDEX IF NOT EXISTS idx_sessions_user_expires ON sessions(userId, expiresAt);
+2025-11-09 23:18:23.838 CST [21395] ERROR:  column "userid" does not exist
+2025-11-09 23:18:23.838 CST [21395] STATEMENT:  CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_expires ON refresh_tokens(userId, expiresAt);
+2025-11-09 23:18:23.915 CST [21395] ERROR:  column p.authorid does not exist at character 351
+2025-11-09 23:18:23.915 CST [21395] HINT:  Perhaps you meant to reference the column "p.authorId".
+2025-11-09 23:18:23.915 CST [21395] STATEMENT:  CREATE OR REPLACE VIEW published_posts_with_author AS
+	SELECT
+	    p.id,
+	    p.title,
+	    p.slug,
+	    p.excerpt,
+	    p.coverImage,
+	    p.featured,
+	    p.tags,
+	    p.readingTime,
+	    p.viewCount,
+	    p.publishedAt,
+	    p.createdAt,
+	    u.name as author_name,
+	    u.username as author_username,
+	    u.avatar as author_avatar
+	FROM posts p
+	JOIN users u ON p.authorId = u.id
+	WHERE p.published = true
+	ORDER BY p.publishedAt DESC;
+2025-11-09 23:18:23.916 CST [21395] ERROR:  column p.authorid does not exist at character 178
+2025-11-09 23:18:23.916 CST [21395] HINT:  Perhaps you meant to reference the column "p.authorId".
+2025-11-09 23:18:23.916 CST [21395] STATEMENT:  CREATE OR REPLACE VIEW popular_posts AS
+	SELECT
+	    p.*,
+	    u.name as author_name,
+	    u.username as author_username,
+	    COUNT(l.id) as like_count
+	FROM posts p
+	JOIN users u ON p.authorId = u.id
+	LEFT JOIN likes l ON p.id = l.postId
+	WHERE p.published = true
+	    AND p.publishedAt >= CURRENT_DATE - INTERVAL '30 days'
+	GROUP BY p.id, u.name, u.username
+	ORDER BY (p.viewCount + COUNT(l.id) * 10) DESC
+	LIMIT 10;
+2025-11-09 23:18:38.923 CST [28029] ERROR:  column p.coverimage does not exist at character 96
+2025-11-09 23:18:38.923 CST [28029] HINT:  Perhaps you meant to reference the column "p.coverImage".
+2025-11-09 23:18:38.923 CST [28029] STATEMENT:  CREATE OR REPLACE VIEW published_posts_with_author AS SELECT p.id, p.title, p.slug, p.excerpt, p.coverImage, p.featured, p.tags, p.readingTime, p.viewCount, p.publishedAt, p.createdAt, u.name as author_name, u.username as author_username, u.avatar as author_avatar FROM posts p JOIN users u ON p."authorId" = u.id WHERE p."published" = true ORDER BY p.publishedAt DESC;
+2025-11-09 23:21:35.701 CST [58148] ERROR:  record "new" has no field "updatedat"
+2025-11-09 23:21:35.701 CST [58148] CONTEXT:  PL/pgSQL assignment "NEW.updatedAt = CURRENT_TIMESTAMP"
+	PL/pgSQL function update_updated_at_column() line 3 at assignment
+2025-11-09 23:21:35.701 CST [58148] STATEMENT:  UPDATE "public"."users" SET "bio" = $1, "updatedAt" = $2 WHERE ("public"."users"."id" = $3 AND 1=1) RETURNING "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."username", "public"."users"."avatar", "public"."users"."bio", "public"."users"."website", "public"."users"."location", "public"."users"."password", "public"."users"."role"::text, "public"."users"."isActive", "public"."users"."emailVerified", "public"."users"."lastLoginAt", "public"."users"."createdAt", "public"."users"."updatedAt"
+2025-11-09 23:21:35.706 CST [58148] ERROR:  duplicate key value violates unique constraint "categories_slug_key"
+2025-11-09 23:21:35.706 CST [58148] DETAIL:  Key (slug)=(test-category) already exists.
+2025-11-09 23:21:35.706 CST [58148] STATEMENT:  INSERT INTO "public"."categories" ("id","name","slug","description","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "public"."categories"."id", "public"."categories"."name", "public"."categories"."slug", "public"."categories"."description", "public"."categories"."color", "public"."categories"."createdAt", "public"."categories"."updatedAt"
+2025-11-09 23:21:35.714 CST [58148] ERROR:  duplicate key value violates unique constraint "posts_slug_key"
+2025-11-09 23:21:35.714 CST [58148] DETAIL:  Key (slug)=(test-post-1762701695710) already exists.
+2025-11-09 23:21:35.714 CST [58148] STATEMENT:  INSERT INTO "public"."posts" ("id","title","slug","content","published","featured","viewCount","createdAt","updatedAt","authorId") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING "public"."posts"."id", "public"."posts"."title", "public"."posts"."slug", "public"."posts"."excerpt", "public"."posts"."content", "public"."posts"."coverImage", "public"."posts"."published", "public"."posts"."featured", "public"."posts"."tags", "public"."posts"."readingTime", "public"."posts"."viewCount", "public"."posts"."createdAt", "public"."posts"."updatedAt", "public"."posts"."publishedAt", "public"."posts"."authorId"
+2025-11-09 23:21:35.727 CST [58148] ERROR:  duplicate key value violates unique constraint "likes_userId_postId_key"
+2025-11-09 23:21:35.727 CST [58148] DETAIL:  Key ("userId", "postId")=(cmhruy44g0000iowb8xsjafbz, cmhruxu9y0007nu89zgrzmnze) already exists.
+2025-11-09 23:21:35.727 CST [58148] STATEMENT:  INSERT INTO "public"."likes" ("id","createdAt","userId","postId") VALUES ($1,$2,$3,$4) RETURNING "public"."likes"."id", "public"."likes"."createdAt", "public"."likes"."userId", "public"."likes"."postId"
+2025-11-09 23:21:35.729 CST [58148] ERROR:  record "new" has no field "updatedat"
+2025-11-09 23:21:35.729 CST [58148] CONTEXT:  PL/pgSQL assignment "NEW.updatedAt = CURRENT_TIMESTAMP"
+	PL/pgSQL function update_updated_at_column() line 3 at assignment
+2025-11-09 23:21:35.729 CST [58148] STATEMENT:  UPDATE "public"."posts" SET "viewCount" = $1, "updatedAt" = $2 WHERE ("public"."posts"."id" = $3 AND 1=1) RETURNING "public"."posts"."id", "public"."posts"."title", "public"."posts"."slug", "public"."posts"."excerpt", "public"."posts"."content", "public"."posts"."coverImage", "public"."posts"."published", "public"."posts"."featured", "public"."posts"."tags", "public"."posts"."readingTime", "public"."posts"."viewCount", "public"."posts"."createdAt", "public"."posts"."updatedAt", "public"."posts"."publishedAt", "public"."posts"."authorId"
+2025-11-09 23:21:35.731 CST [58148] ERROR:  duplicate key value violates unique constraint "subscriptions_email_key"
+2025-11-09 23:21:35.731 CST [58148] DETAIL:  Key (email)=(test-subscriber@example.com) already exists.
+2025-11-09 23:21:35.731 CST [58148] STATEMENT:  INSERT INTO "public"."subscriptions" ("id","email","name","active","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "public"."subscriptions"."id", "public"."subscriptions"."email", "public"."subscriptions"."name", "public"."subscriptions"."active", "public"."subscriptions"."createdAt", "public"."subscriptions"."updatedAt"
+2025-11-09 23:21:35.732 CST [58148] ERROR:  record "new" has no field "updatedat"
+2025-11-09 23:21:35.732 CST [58148] CONTEXT:  PL/pgSQL assignment "NEW.updatedAt = CURRENT_TIMESTAMP"
+	PL/pgSQL function update_updated_at_column() line 3 at assignment
+2025-11-09 23:21:35.732 CST [58148] STATEMENT:  UPDATE "public"."subscriptions" SET "active" = $1, "updatedAt" = $2 WHERE ("public"."subscriptions"."id" = $3 AND 1=1) RETURNING "public"."subscriptions"."id", "public"."subscriptions"."email", "public"."subscriptions"."name", "public"."subscriptions"."active", "public"."subscriptions"."createdAt", "public"."subscriptions"."updatedAt"
+2025-11-09 23:21:36.410 CST [58148] ERROR:  column "publishedat" does not exist at character 69
+2025-11-09 23:21:36.410 CST [58148] HINT:  Perhaps you meant to reference the column "posts.publishedAt".
+2025-11-09 23:21:36.410 CST [58148] STATEMENT:  EXPLAIN ANALYZE SELECT * FROM posts WHERE published = true ORDER BY publishedAt DESC LIMIT 10;
+2025-11-09 23:21:36.411 CST [58148] ERROR:  insert or update on table "posts" violates foreign key constraint "posts_authorId_fkey"
+2025-11-09 23:21:36.411 CST [58148] DETAIL:  Key (authorId)=(non-existent-user-id) is not present in table "users".
+2025-11-09 23:21:36.411 CST [58148] STATEMENT:  INSERT INTO "public"."posts" ("id","title","slug","content","published","featured","viewCount","createdAt","updatedAt","authorId") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING "public"."posts"."id", "public"."posts"."title", "public"."posts"."slug", "public"."posts"."excerpt", "public"."posts"."content", "public"."posts"."coverImage", "public"."posts"."published", "public"."posts"."featured", "public"."posts"."tags", "public"."posts"."readingTime", "public"."posts"."viewCount", "public"."posts"."createdAt", "public"."posts"."updatedAt", "public"."posts"."publishedAt", "public"."posts"."authorId"
+2025-11-09 23:21:57.498 CST [59508] ERROR:  relation "public._categorytopost" does not exist
+2025-11-09 23:21:57.498 CST [59508] STATEMENT:  
+	        SELECT
+	            schemaname||'.'||tablename as table,
+	            pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size,
+	            pg_total_relation_size(schemaname||'.'||tablename) as size_bytes
+	        FROM pg_tables
+	        WHERE schemaname = 'public'
+	        ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
+	        LIMIT 10;
+2025-11-09 23:24:19.420 CST [65608] ERROR:  duplicate key value violates unique constraint "users_email_key"
+2025-11-09 23:24:19.420 CST [65608] DETAIL:  Key (email)=(admin@example.com) already exists.
+2025-11-09 23:24:19.420 CST [65608] STATEMENT:  INSERT INTO "public"."users" ("id","email","name","username","password","role","isActive","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,CAST($6::text AS "public"."UserRole"),$7,$8,$9) RETURNING "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."username", "public"."users"."avatar", "public"."users"."bio", "public"."users"."website", "public"."users"."location", "public"."users"."password", "public"."users"."role"::text, "public"."users"."isActive", "public"."users"."emailVerified", "public"."users"."lastLoginAt", "public"."users"."createdAt", "public"."users"."updatedAt"
+2025-11-09 23:24:19.428 CST [65608] ERROR:  insert or update on table "posts" violates foreign key constraint "posts_authorId_fkey"
+2025-11-09 23:24:19.428 CST [65608] DETAIL:  Key (authorId)=(invalid-user-id) is not present in table "users".
+2025-11-09 23:24:19.428 CST [65608] STATEMENT:  INSERT INTO "public"."posts" ("id","title","slug","content","published","featured","viewCount","createdAt","updatedAt","authorId") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING "public"."posts"."id", "public"."posts"."title", "public"."posts"."slug", "public"."posts"."excerpt", "public"."posts"."content", "public"."posts"."coverImage", "public"."posts"."published", "public"."posts"."featured", "public"."posts"."tags", "public"."posts"."readingTime", "public"."posts"."viewCount", "public"."posts"."createdAt", "public"."posts"."updatedAt", "public"."posts"."publishedAt", "public"."posts"."authorId"
+2025-11-09 23:51:11.063 CST [23493] ERROR:  column "isactive" does not exist at character 35
+2025-11-09 23:51:11.063 CST [23493] HINT:  Perhaps you meant to reference the column "users.isActive".
+2025-11-09 23:51:11.063 CST [23493] STATEMENT:  SELECT id, username, email, role, isActive, createdAt FROM users ORDER BY createdAt;
+2025-11-09 23:51:12.055 CST [23574] ERROR:  column "authorid" does not exist at character 46
+2025-11-09 23:51:12.055 CST [23574] HINT:  Perhaps you meant to reference the column "posts.authorId".
+2025-11-09 23:51:12.055 CST [23574] STATEMENT:  SELECT id, title, slug, published, featured, authorId, createdAt FROM posts ORDER BY createdAt;
+2025-11-09 23:51:17.230 CST [23821] ERROR:  column "createdat" does not exist at character 47
+2025-11-09 23:51:17.230 CST [23821] HINT:  Perhaps you meant to reference the column "users.createdAt".
+2025-11-09 23:51:17.230 CST [23821] STATEMENT:  SELECT id, username, email, role, "isActive", createdAt FROM users ORDER BY createdAt;
+2025-11-09 23:51:17.966 CST [23869] ERROR:  column "createdat" does not exist at character 58
+2025-11-09 23:51:17.966 CST [23869] HINT:  Perhaps you meant to reference the column "posts.createdAt".
+2025-11-09 23:51:17.966 CST [23869] STATEMENT:  SELECT id, title, slug, published, featured, "authorId", createdAt FROM posts ORDER BY createdAt;
+2025-11-09 23:51:56.816 CST [25630] ERROR:  column "usecatupd" does not exist at character 40
+2025-11-09 23:51:56.816 CST [25630] STATEMENT:  SELECT usename, usecreatedb, usesuper, usecatupd FROM pg_user;

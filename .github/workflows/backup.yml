@@ -1,0 +1,225 @@
+name: Automated Backup
+
+on:
+  schedule:
+    # 每天凌晨2点执行备份
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      backup_type:
+        description: '备份类型'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - database
+          - files
+
+env:
+  BACKUP_RETENTION_DAYS: 30
+  REMOTE_BACKUP_URL: ${{ secrets.REMOTE_BACKUP_URL }}
+
+jobs:
+  backup:
+    name: Automated Backup
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SSH for backup server
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.BACKUP_SSH_KEY }}
+
+    - name: Create backup on server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.BACKUP_HOST }}
+        username: ${{ secrets.BACKUP_USERNAME }}
+        key: ${{ secrets.BACKUP_SSH_KEY }}
+        script: |
+          cd /opt/personal-blog
+
+          # 根据输入的备份类型执行相应的备份
+          case "${{ github.event.inputs.backup_type || 'full' }}" in
+            "database")
+              echo "执行数据库备份..."
+              ./scripts/deployment/backup.sh --db-only
+              ;;
+            "files")
+              echo "执行文件备份..."
+              ./scripts/deployment/backup.sh --files-only
+              ;;
+            "full"|*)
+              echo "执行完整备份..."
+              ./scripts/deployment/backup.sh
+              ;;
+          esac
+
+    - name: Sync to remote storage
+      if: env.REMOTE_BACKUP_URL != ''
+      run: |
+        # 使用rsync同步到远程存储
+        rsync -avz --delete \
+          -e "ssh -o StrictHostKeyChecking=no" \
+          ${{ secrets.BACKUP_USERNAME }}@${{ secrets.BACKUP_HOST }}:/opt/personal-blog/backups/ \
+          ${{ env.REMOTE_BACKUP_URL }}
+
+    - name: Cleanup old backups
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.BACKUP_HOST }}
+        username: ${{ secrets.BACKUP_USERNAME }}
+        key: ${{ secrets.BACKUP_SSH_KEY }}
+        script: |
+          cd /opt/personal-blog/backups
+
+          # 清理超过保留期的备份文件
+          find . -name "db_backup_*.sql.gz" -type f -mtime +${{ env.BACKUP_RETENTION_DAYS }} -delete
+          find . -name "files_backup_*.tar.gz" -type f -mtime +${{ env.BACKUP_RETENTION_DAYS }} -delete
+
+          echo "清理完成，保留最近 ${{ env.BACKUP_RETENTION_DAYS }} 天的备份"
+
+    - name: Verify backup integrity
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.BACKUP_HOST }}
+        username: ${{ secrets.BACKUP_USERNAME }}
+        key: ${{ secrets.BACKUP_SSH_KEY }}
+        script: |
+          cd /opt/personal-blog
+
+          # 获取最新备份文件
+          latest_backup=$(ls -t backups/db_backup_*.sql.gz | head -1)
+
+          if [[ -n "$latest_backup" ]]; then
+            echo "验证备份文件: $latest_backup"
+            file_size=$(stat -c%s "$latest_backup")
+
+            if [[ $file_size -gt 1000 ]]; then
+              echo "备份文件验证通过 (大小: $file_size 字节)"
+            else
+              echo "警告: 备份文件可能损坏 (大小: $file_size 字节)"
+              exit 1
+            fi
+          else
+            echo "错误: 未找到备份文件"
+            exit 1
+          fi
+
+    - name: Send backup notification
+      uses: 8398a7/action-slack@v3
+      if: always()
+      with:
+        status: ${{ job.status }}
+        channel: '#backups'
+        text: |
+          备份状态: ${{ job.status }}
+          备份类型: ${{ github.event.inputs.backup_type || 'full' }}
+          执行时间: ${{ github.event.head_commit.timestamp || '手动触发' }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+    - name: Send email report
+      if: always()
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "备份报告 - ${{ github.repository }}"
+        body: |
+          备份状态: ${{ job.status }}
+          备份类型: ${{ github.event.inputs.backup_type || 'full' }}
+          执行时间: ${{ github.event.head_commit.timestamp || '手动触发' }}
+          工作流: ${{ github.workflow }}
+          运行ID: ${{ github.run_id }}
+        to: ${{ secrets.ADMIN_EMAIL }}
+        from: GitHub Actions
+
+  # 备份恢复测试
+  restore-test:
+    name: Backup Restore Test
+    runs-on: ubuntu-latest
+    needs: backup
+    if: github.event_name == 'schedule'  # 仅在定时任务时执行恢复测试
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_restore
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download latest backup
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.BACKUP_HOST }}
+        username: ${{ secrets.BACKUP_USERNAME }}
+        key: ${{ secrets.BACKUP_SSH_KEY }}
+        source: "/opt/personal-blog/backups/db_backup_*.sql.gz"
+        target: "./backups/"
+        strip_components: 3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Test backup restoration
+      run: |
+        # 获取最新备份文件
+        latest_backup=$(ls -t backups/db_backup_*.sql.gz | head -1)
+
+        if [[ -n "$latest_backup" ]]; then
+          echo "测试恢复备份: $latest_backup"
+
+          # 创建测试数据库
+          createdb -h localhost -U postgres test_restore
+
+          # 恢复备份到测试数据库
+          gunzip -c "$latest_backup" | psql -h localhost -U postgres test_restore
+
+          # 验证数据完整性
+          table_count=$(psql -h localhost -U postgres test_restore -t -c "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public';")
+
+          if [[ $table_count -gt 0 ]]; then
+            echo "备份恢复测试通过 (找到 $table_count 个表)"
+          else
+            echo "错误: 备份恢复测试失败"
+            exit 1
+          fi
+        else
+          echo "错误: 未找到备份文件"
+          exit 1
+        fi
+      env:
+        PGPASSWORD: test
+
+    - name: Send restore test notification
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#backups'
+        text: "备份恢复测试状态: ${{ job.status }}"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

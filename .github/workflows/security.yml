@@ -1,0 +1,303 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # 每周一凌晨3点进行安全扫描
+    - cron: '0 3 * * 1'
+
+jobs:
+  # 依赖安全扫描
+  dependency-scan:
+    name: Dependency Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run npm audit
+      run: npm audit --audit-level=moderate --json > npm-audit-report.json || true
+
+    - name: Upload npm audit report
+      uses: actions/upload-artifact@v3
+      with:
+        name: npm-audit-report
+        path: npm-audit-report.json
+
+    - name: Run Snyk security scan
+      uses: snyk/actions/node@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high --json > snyk-report.json || true
+
+    - name: Upload Snyk report
+      uses: actions/upload-artifact@v3
+      with:
+        name: snyk-report
+        path: snyk-report.json
+
+  # 代码安全扫描
+  code-scan:
+    name: Code Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/init@v2
+      with:
+        languages: javascript
+
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v2
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+
+    - name: Run Semgrep security scan
+      uses: returntocorp/semgrep-action@v1
+      with:
+        config: >-
+          p/security-audit
+          p/secrets
+          p/owasp-top-ten
+          p/nodejs
+          p/typescript
+
+    - name: Run njsscan
+      run: |
+        pip install njsscan
+        njsscan . --sarif --output njsscan-report.sarif || true
+
+    - name: Upload njsscan report
+      uses: actions/upload-artifact@v3
+      with:
+        name: njsscan-report
+        path: njsscan-report.sarif
+
+  # Docker安全扫描
+  docker-scan:
+    name: Docker Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.prod
+        load: true
+        tags: test-image:latest
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: test-image:latest
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Run Grype vulnerability scanner
+      run: |
+        curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+        grype test-image:latest -o json > grype-results.json || true
+
+    - name: Upload Grype scan results
+      uses: actions/upload-artifact@v3
+      with:
+        name: grype-results
+        path: grype-results.json
+
+  # 环境安全检查
+  env-security:
+    name: Environment Security Check
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check for hardcoded secrets
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+
+    - name: Check .env.example completeness
+      run: |
+        if [[ -f .env.example ]]; then
+          echo "检查 .env.example 文件..."
+          # 检查是否包含敏感信息
+          if grep -q "password\|secret\|key" .env.example; then
+            echo "警告: .env.example 包含可能的敏感信息占位符"
+          fi
+        else
+          echo "错误: 未找到 .env.example 文件"
+          exit 1
+        fi
+
+    - name: Check Docker security configurations
+      run: |
+        echo "检查 Docker 配置安全性..."
+
+        # 检查 Dockerfile
+        if grep -q "FROM.*:latest" Dockerfile*; then
+          echo "警告: 发现使用 latest 标签的 Docker 镜像"
+        fi
+
+        # 检查 docker-compose 文件
+        if grep -q "privileged: true" docker-compose*.yml; then
+          echo "警告: 发现 privileged: true 配置"
+        fi
+
+        # 检查是否以 root 用户运行
+        if ! grep -q "USER.*node\|USER.*nextjs" Dockerfile*; then
+          echo "警告: 建议使用非 root 用户运行容器"
+        fi
+
+  # SSL证书检查
+  ssl-check:
+    name: SSL Certificate Check
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Check SSL certificate
+      run: |
+        if [[ -n "${{ secrets.PROD_URL }}" ]]; then
+          domain=$(echo "${{ secrets.PROD_URL }}" | sed 's|https://||' | sed 's|/.*||')
+          echo "检查 SSL 证书: $domain"
+
+          # 获取证书到期时间
+          expiry_date=$(echo | openssl s_client -servername "$domain" -connect "$domain:443" 2>/dev/null | openssl x509 -noout -enddate | cut -d= -f2)
+
+          if [[ -n "$expiry_date" ]]; then
+            echo "证书到期时间: $expiry_date"
+
+            # 计算剩余天数
+            expiry_timestamp=$(date -d "$expiry_date" +%s 2>/dev/null || date -j -f "%b %d %T %Y %Z" "$expiry_date" +%s 2>/dev/null)
+            current_timestamp=$(date +%s)
+            days_left=$(( (expiry_timestamp - current_timestamp) / 86400 ))
+
+            if [[ $days_left -lt 30 ]]; then
+              echo "警告: SSL 证书将在 $days_left 天后过期"
+              # 这里可以添加自动续期逻辑或发送告警
+            else
+              echo "SSL 证书有效期充足: $days_left 天"
+            fi
+          else
+            echo "错误: 无法获取 SSL 证书信息"
+          fi
+        else
+          echo "跳过 SSL 检查 (未配置生产环境 URL)"
+        fi
+
+  # 安全报告汇总
+  security-report:
+    name: Security Report Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, code-scan, docker-scan]
+    if: always()
+
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+
+    - name: Generate security report
+      run: |
+        echo "# 安全扫描报告 - $(date)" > security-report.md
+        echo "" >> security-report.md
+        echo "## 扫描结果汇总" >> security-report.md
+        echo "" >> security-report.md
+
+        # 依赖扫描结果
+        if [[ -f npm-audit-report.json ]]; then
+          echo "### 依赖安全扫描 (npm audit)" >> security-report.md
+          vulnerabilities=$(jq '.metadata.vulnerabilities.total // 0' npm-audit-report.json)
+          echo "- 发现漏洞数量: $vulnerabilities" >> security-report.md
+          echo "" >> security-report.md
+        fi
+
+        # Snyk扫描结果
+        if [[ -f snyk-report.json ]]; then
+          echo "### Snyk安全扫描" >> security-report.md
+          vulnerabilities=$(jq '.run.vulnerabilities | length // 0' snyk-report.json)
+          echo "- 发现漏洞数量: $vulnerabilities" >> security-report.md
+          echo "" >> security-report.md
+        fi
+
+        # Docker扫描结果
+        if [[ -f trivy-results.sarif ]]; then
+          echo "### Docker安全扫描 (Trivy)" >> security-report.md
+          vulnerabilities=$(jq '.runs[0].results | length // 0' trivy-results.sarif)
+          echo "- 发现漏洞数量: $vulnerabilities" >> security-report.md
+          echo "" >> security-report.md
+        fi
+
+        echo "## 详细报告" >> security-report.md
+        echo "请查看下载的工件文件获取详细信息。" >> security-report.md
+
+    - name: Upload security report
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-report
+        path: security-report.md
+
+    - name: Send security notification
+      if: failure()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        channel: '#security'
+        text: "安全扫描发现问题，请查看详细报告"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+# 权限配置
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+
+# 并发控制
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}

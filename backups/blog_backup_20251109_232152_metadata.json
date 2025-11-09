@@ -1,0 +1,11 @@
+{
+  "backup_date": "2025-11-09T23:21:53+08:00",
+  "database_name": "personal_blog",
+  "database_size": "10033 kB",
+  "table_count": "15",
+  "backup_file": "blog_backup_20251109_232152.sql.gz",
+  "backup_size": "8.0K",
+  "backup_type": "full",
+  "compression": "gzip",
+  "retention_days": 30
+}
