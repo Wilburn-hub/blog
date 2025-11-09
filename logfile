@@ -128,3 +128,11 @@
 2025-11-09 23:51:17.966 CST [23869] STATEMENT:  SELECT id, title, slug, published, featured, "authorId", createdAt FROM posts ORDER BY createdAt;
 2025-11-09 23:51:56.816 CST [25630] ERROR:  column "usecatupd" does not exist at character 40
 2025-11-09 23:51:56.816 CST [25630] STATEMENT:  SELECT usename, usecreatedb, usesuper, usecatupd FROM pg_user;
+2025-11-10 00:47:11.731 CST [32805] LOG:  could not receive data from client: Connection reset by peer
+2025-11-10 00:47:12.349 CST [32834] FATAL:  terminating connection due to administrator command
+2025-11-10 01:27:02.509 CST [25815] LOG:  could not receive data from client: Connection reset by peer
+2025-11-10 01:27:02.509 CST [25814] LOG:  could not receive data from client: Connection reset by peer
+2025-11-10 01:27:02.551 CST [25828] LOG:  could not receive data from client: Connection reset by peer
+2025-11-10 01:27:02.551 CST [25827] LOG:  could not receive data from client: Connection reset by peer
+2025-11-10 01:27:02.551 CST [25826] LOG:  could not receive data from client: Connection reset by peer
+2025-11-10 01:27:02.570 CST [25833] LOG:  could not receive data from client: Connection reset by peer

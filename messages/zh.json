@@ -1,0 +1,179 @@
+{
+  "common": {
+    "loading": "加载中...",
+    "search": "搜索",
+    "search_placeholder": "搜索文章...",
+    "read_more": "阅读更多",
+    "back_to_top": "返回顶部",
+    "copy": "复制",
+    "copied": "已复制",
+    "share": "分享",
+    "cancel": "取消",
+    "confirm": "确认",
+    "save": "保存",
+    "edit": "编辑",
+    "delete": "删除",
+    "publish": "发布",
+    "draft": "草稿",
+    "published": "已发布",
+    "unpublished": "未发布",
+    "close": "关闭",
+    "open": "打开",
+    "menu": "菜单",
+    "toggle_menu": "切换菜单"
+  },
+  "navigation": {
+    "home": "首页",
+    "posts": "文章",
+    "categories": "分类",
+    "tags": "标签",
+    "subscribe": "订阅",
+    "about": "关于",
+    "profile": "个人资料",
+    "write_article": "写文章",
+    "login": "登录",
+    "logout": "退出登录",
+    "signup": "注册"
+  },
+  "language": {
+    "switch_language": "切换语言",
+    "zh": "中文",
+    "en": "English",
+    "ja": "日本語"
+  },
+  "home": {
+    "hero_title": "欢迎来到我的个人博客",
+    "hero_subtitle": "分享技术、生活和思考的地方",
+    "latest_posts": "最新文章",
+    "featured_posts": "精选文章",
+    "view_all_posts": "查看所有文章",
+    "no_posts_found": "暂无文章",
+    "no_posts_description": "还没有发布任何文章，请稍后再来查看。"
+  },
+  "posts": {
+    "all_posts": "所有文章",
+    "no_posts": "暂无文章",
+    "no_posts_description": "该分类下暂时没有文章。",
+    "related_posts": "相关文章",
+    "published_on": "发布于",
+    "updated_on": "更新于",
+    "reading_time": "阅读时间",
+    "minutes": "分钟",
+    "views": "阅读",
+    "likes": "喜欢",
+    "comments": "评论",
+    "category": "分类",
+    "tags": "标签",
+    "author": "作者",
+    "share_post": "分享文章",
+    "table_of_contents": "目录"
+  },
+  "categories": {
+    "all_categories": "所有分类",
+    "no_categories": "暂无分类",
+    "no_categories_description": "还没有创建任何分类。",
+    "posts_in_category": "{count} 篇文章",
+    "one_post_in_category": "1 篇文章"
+  },
+  "tags": {
+    "all_tags": "所有标签",
+    "no_tags": "暂无标签",
+    "no_tags_description": "还没有创建任何标签。",
+    "posts_with_tag": "{count} 篇文章",
+    "one_post_with_tag": "1 篇文章",
+    "popular_tags": "热门标签",
+    "search_tags": "搜索标签"
+  },
+  "about": {
+    "page_title": "关于我",
+    "introduction": "你好！我是一名热爱技术和分享的开发者。",
+    "skills_title": "技能专长",
+    "experience_title": "工作经历",
+    "education_title": "教育背景",
+    "contact_title": "联系方式",
+    "download_cv": "下载简历"
+  },
+  "auth": {
+    "sign_in": "登录",
+    "sign_up": "注册",
+    "email": "邮箱",
+    "password": "密码",
+    "confirm_password": "确认密码",
+    "remember_me": "记住我",
+    "forgot_password": "忘记密码？",
+    "no_account": "还没有账号？",
+    "have_account": "已有账号？",
+    "sign_in_error": "登录失败",
+    "sign_up_error": "注册失败",
+    "invalid_credentials": "邮箱或密码错误",
+    "password_mismatch": "两次输入的密码不一致"
+  },
+  "profile": {
+    "page_title": "个人资料",
+    "edit_profile": "编辑资料",
+    "username": "用户名",
+    "display_name": "显示名称",
+    "bio": "个人简介",
+    "website": "个人网站",
+    "location": "所在地",
+    "update_profile": "更新资料",
+    "profile_updated": "资料已更新"
+  },
+  "dashboard": {
+    "page_title": "控制台",
+    "overview": "概览",
+    "posts_management": "文章管理",
+    "categories_management": "分类管理",
+    "settings": "设置",
+    "create_post": "创建文章",
+    "edit_post": "编辑文章",
+    "post_title": "文章标题",
+    "post_content": "文章内容",
+    "post_excerpt": "文章摘要",
+    "featured_image": "特色图片",
+    "seo_title": "SEO标题",
+    "seo_description": "SEO描述",
+    "select_category": "选择分类",
+    "add_tags": "添加标签",
+    "post_published": "文章已发布",
+    "post_saved": "文章已保存"
+  },
+  "footer": {
+    "copyright": "© {year} {name}. 保留所有权利。",
+    "powered_by": "由 {technology} 强力驱动",
+    "social_links": "社交链接"
+  },
+  "search": {
+    "page_title": "搜索",
+    "search_query": "搜索关键词",
+    "search_results": "搜索结果",
+    "no_results": "未找到相关结果",
+    "no_results_description": "请尝试使用其他关键词进行搜索。",
+    "found_results": "找到 {count} 个结果",
+    "found_one_result": "找到 1 个结果"
+  },
+  "subscribe": {
+    "page_title": "订阅博客",
+    "email_subscription": "邮件订阅",
+    "email_placeholder": "请输入您的邮箱地址",
+    "subscribe_button": "立即订阅",
+    "subscribe_success": "订阅成功！",
+    "subscribe_error": "订阅失败，请重试。",
+    "already_subscribed": "您已经订阅过了。",
+    "invalid_email": "请输入有效的邮箱地址。",
+    "rss_feed": "RSS订阅",
+    "rss_description": "通过RSS阅读器订阅我们的博客"
+  },
+  "error": {
+    "404_title": "页面未找到",
+    "404_description": "抱歉，您访问的页面不存在。",
+    "500_title": "服务器错误",
+    "500_description": "抱歉，服务器遇到了一些问题。",
+    "back_home": "返回首页"
+  },
+  "seo": {
+    "default_title": "个人博客",
+    "default_description": "一个基于Next.js、TypeScript和Tailwind CSS构建的现代个人博客",
+    "site_name": "个人博客"
+  }
+}

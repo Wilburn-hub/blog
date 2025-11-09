@@ -1,6 +1,36 @@
 import { prisma } from '../db/prisma'
-import { CacheService } from '../cache/redis'
 import { nanoid } from 'nanoid'
+
+// 简单内存缓存实现
+class SimpleCache {
+  private cache = new Map<string, { data: any; expires: number }>()
+
+  set(key: string, value: any, ttlSeconds = 3600) {
+    this.cache.set(key, {
+      data: value,
+      expires: Date.now() + ttlSeconds * 1000
+    })
+  }
+
+  get(key: string) {
+    const item = this.cache.get(key)
+    if (!item || Date.now() > item.expires) {
+      this.cache.delete(key)
+      return null
+    }
+    return item.data
+  }
+
+  delete(key: string) {
+    this.cache.delete(key)
+  }
+
+  clear() {
+    this.cache.clear()
+  }
+}
+
+const cache = new SimpleCache()
 
 export interface CreatePostData {
   title: string
@@ -86,9 +116,9 @@ export class PostService {
 
   static async getPostBySlug(slug: string, includeUnpublished = false) {
     // Try to get from cache first
-    const cache = await CacheService.getInstance()
+    const cacheInstance = cache
     const cacheKey = includeUnpublished ? `post:${slug}:all` : `post:${slug}:published`
-    const cachedPost = await cache.get(cacheKey)
+    const cachedPost = cacheInstance.get(cacheKey)
 
     if (cachedPost) {
       return cachedPost
@@ -130,7 +160,7 @@ export class PostService {
 
     if (post) {
       // Cache the post
-      await cache.set(cacheKey, post, 3600) // 1 hour
+      cacheInstance.set(cacheKey, post, 3600) // 1 hour
     }
 
     return post
@@ -441,7 +471,7 @@ export class PostService {
   }
 
   static async getPopularPosts(limit = 5) {
-    const cache = await CacheService.getInstance()
+    const cacheInstance = cache
     const cacheKey = 'posts:popular'
     const cachedPosts = await cache.get(cacheKey)
 
@@ -487,7 +517,7 @@ export class PostService {
   }
 
   static async getFeaturedPosts(limit = 5) {
-    const cache = await CacheService.getInstance()
+    const cacheInstance = cache
     const cacheKey = 'posts:featured'
     const cachedPosts = await cache.get(cacheKey)
 
@@ -543,7 +573,7 @@ export class PostService {
       return []
     }
 
-    const cache = await CacheService.getInstance()
+    const cacheInstance = cache
     const cacheKey = `posts:related:${postId}`
     const cachedPosts = await cache.get(cacheKey)
 
@@ -599,7 +629,7 @@ export class PostService {
   static async getPostsByTag(tag: string, page = 1, limit = 10) {
     const skip = (page - 1) * limit
 
-    const cache = await CacheService.getInstance()
+    const cacheInstance = cache
     const cacheKey = `posts:tag:${tag}:${page}:${limit}`
     const cachedResult = await cache.get(cacheKey)
 
@@ -665,7 +695,7 @@ export class PostService {
   }
 
   static async getAllTags() {
-    const cache = await CacheService.getInstance()
+    const cacheInstance = cache
     const cacheKey = 'tags:all'
     const cachedTags = await cache.get(cacheKey)
 
@@ -724,8 +754,214 @@ export class PostService {
     }
   }
 
+  // 新增：获取标签详细信息
+  static async getTagDetails(tag: string, page = 1, limit = 12) {
+    const skip = (page - 1) * limit
+
+    const cacheInstance = cache
+    const cacheKey = `tag:details:${tag}:${page}:${limit}`
+    const cachedResult = await cache.get(cacheKey)
+
+    if (cachedResult) {
+      return cachedResult
+    }
+
+    // 获取标签的文章
+    const postsResult = await this.getPostsByTag(tag, page, limit)
+
+    // 获取标签统计信息
+    const allTags = await this.getAllTags()
+    const tagInfo = allTags.find(t => t.name.toLowerCase() === tag.toLowerCase())
+
+    // 获取相关标签（与当前标签共同出现频率最高的标签）
+    const relatedTags = await this.getRelatedTags(tag)
+
+    const result = {
+      ...postsResult,
+      tag: {
+        name: tag,
+        count: tagInfo?.count || postsResult.pagination.total,
+        slug: encodeURIComponent(tag.toLowerCase().replace(/\s+/g, '-')),
+      },
+      relatedTags,
+      stats: {
+        totalPosts: postsResult.pagination.total,
+        totalPages: postsResult.pagination.pages,
+        currentPage: page,
+      }
+    }
+
+    await cache.set(cacheKey, result, 1800) // 30 minutes
+    return result
+  }
+
+  // 新增：获取相关标签
+  static async getRelatedTags(tag: string, limit = 10) {
+    const cacheInstance = cache
+    const cacheKey = `tags:related:${tag}`
+    const cachedTags = await cache.get(cacheKey)
+
+    if (cachedTags) {
+      return cachedTags
+    }
+
+    // 获取包含当前标签的所有文章
+    const postsWithTag = await prisma.post.findMany({
+      where: {
+        published: true,
+        tags: {
+          has: tag,
+        },
+      },
+      select: { tags: true },
+      take: 100, // 限制查询数量以提高性能
+    })
+
+    // 统计共同出现的标签
+    const tagCounts = new Map<string, number>()
+
+    postsWithTag.forEach(post => {
+      post.tags.forEach(postTag => {
+        if (postTag !== tag) {
+          tagCounts.set(postTag, (tagCounts.get(postTag) || 0) + 1)
+        }
+      })
+    })
+
+    // 按出现频率排序并返回前N个
+    const relatedTags = Array.from(tagCounts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit)
+
+    await cache.set(cacheKey, relatedTags, 3600) // 1 hour
+    return relatedTags
+  }
+
+  // 新增：搜索标签
+  static async searchTags(query: string, limit = 20) {
+    if (!query || query.trim().length < 2) {
+      return []
+    }
+
+    const cacheInstance = cache
+    const cacheKey = `tags:search:${encodeURIComponent(query.trim())}:${limit}`
+    const cachedTags = await cache.get(cacheKey)
+
+    if (cachedTags) {
+      return cachedTags
+    }
+
+    const allTags = await this.getAllTags()
+
+    const searchResults = allTags
+      .filter(tag =>
+        tag.name.toLowerCase().includes(query.toLowerCase().trim())
+      )
+      .slice(0, limit)
+
+    await cache.set(cacheKey, searchResults, 1800) // 30 minutes
+    return searchResults
+  }
+
+  // 新增：获取热门标签（按时间范围）
+  static async getPopularTags(days = 30, limit = 15) {
+    const cacheInstance = cache
+    const cacheKey = `tags:popular:${days}:${limit}`
+    const cachedTags = await cache.get(cacheKey)
+
+    if (cachedTags) {
+      return cachedTags
+    }
+
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - days)
+
+    // 获取指定时间范围内的文章标签
+    const recentPosts = await prisma.post.findMany({
+      where: {
+        published: true,
+        publishedAt: {
+          gte: startDate,
+        },
+      },
+      select: { tags: true },
+    })
+
+    // 统计标签出现频率
+    const tagCounts = new Map<string, number>()
+    recentPosts.forEach(post => {
+      post.tags.forEach(tag => {
+        tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1)
+      })
+    })
+
+    const popularTags = Array.from(tagCounts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit)
+
+    await cache.set(cacheKey, popularTags, 1800) // 30 minutes
+    return popularTags
+  }
+
+  // 新增：获取标签统计信息
+  static async getTagStatistics() {
+    const cacheInstance = cache
+    const cacheKey = 'tags:statistics'
+    const cachedStats = await cache.get(cacheKey)
+
+    if (cachedStats) {
+      return cachedStats
+    }
+
+    const allTags = await this.getAllTags()
+    const totalPosts = await prisma.post.count({
+      where: { published: true }
+    })
+
+    const stats = {
+      totalTags: allTags.length,
+      totalPosts,
+      averagePostsPerTag: totalPosts > 0 ? Math.round((totalPosts / allTags.length) * 100) / 100 : 0,
+      mostPopularTag: allTags[0] || { name: '', count: 0 },
+      leastPopularTag: allTags[allTags.length - 1] || { name: '', count: 0 },
+      tagsWithSinglePost: allTags.filter(tag => tag.count === 1).length,
+      tagsWithMultiplePosts: allTags.filter(tag => tag.count > 1).length,
+    }
+
+    await cache.set(cacheKey, stats, 3600) // 1 hour
+    return stats
+  }
+
+  // 新增：清理标签（删除没有关联文章的标签）
+  static async cleanupUnusedTags() {
+    const allTags = await this.getAllTags()
+
+    // 找出所有实际使用的标签
+    const posts = await prisma.post.findMany({
+      where: { published: true },
+      select: { tags: true },
+    })
+
+    const usedTags = new Set<string>()
+    posts.forEach(post => {
+      post.tags.forEach(tag => usedTags.add(tag))
+    })
+
+    // 找出未使用的标签
+    const unusedTags = allTags.filter(tag => !usedTags.has(tag.name))
+
+    return {
+      totalTags: allTags.length,
+      usedTags: usedTags.size,
+      unusedTags: unusedTags.length,
+      unusedTagList: unusedTags,
+    }
+  }
+
   private static async invalidatePostCache(slug?: string) {
-    const cache = await CacheService.getInstance()
+    const cacheInstance = cache
     if (slug) {
       await cache.invalidatePostCache(slug)
     } else {

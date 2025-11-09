@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
 import { Menu, Search, X, PenSquare, User, LogIn, LogOut } from 'lucide-react'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -16,15 +17,9 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { SearchInput } from '@/components/ui/search-input'
+import { RSSButton } from '@/components/ui/rss-button'
+import { LanguageSwitcher } from '@/components/ui/language-switcher'
 import { cn } from '@/lib/utils'
-
-const navigation = [
-  { name: '首页', href: '/' },
-  { name: '文章', href: '/posts' },
-  { name: '分类', href: '/categories' },
-  { name: '标签', href: '/tags' },
-  { name: '关于', href: '/about' },
-]
 
 interface HeaderProps {
   className?: string
@@ -40,12 +35,31 @@ export function Header({ className, user }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
   const [isSearchOpen, setIsSearchOpen] = React.useState(false)
   const pathname = usePathname()
+  const locale = useLocale()
+  const t = useTranslations()
+
+  // Build navigation items dynamically
+  const navigation = [
+    { name: t('navigation.home'), href: '/' },
+    { name: t('navigation.posts'), href: '/posts' },
+    { name: t('navigation.categories'), href: '/categories' },
+    { name: t('navigation.tags'), href: '/tags' },
+    { name: t('navigation.subscribe'), href: '/subscribe' },
+    { name: t('navigation.about'), href: '/about' },
+  ]
 
   const isActive = (href: string) => {
+    // Remove locale from pathname for comparison
+    const pathnameWithoutLocale = pathname.replace(`/${locale}`, '') || '/'
     if (href === '/') {
-      return pathname === href
+      return pathnameWithoutLocale === href
     }
-    return pathname.startsWith(href)
+    return pathnameWithoutLocale.startsWith(href)
+  }
+
+  // Build href with locale
+  const buildHref = (href: string) => {
+    return locale === 'zh' ? href : `/${locale}${href}`
   }
 
   return (
@@ -57,11 +71,11 @@ export function Header({ className, user }: HeaderProps) {
     >
       <div className="container flex h-16 items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2">
+        <Link href={buildHref('/')} className="flex items-center space-x-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <PenSquare className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold">个人博客</span>
+          <span className="text-xl font-bold">{t('seo.site_name')}</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -69,7 +83,7 @@ export function Header({ className, user }: HeaderProps) {
           {navigation.map(item => (
             <Link
               key={item.href}
-              href={item.href}
+              href={buildHref(item.href)}
               className={cn(
                 'text-sm font-medium transition-colors hover:text-foreground/80',
                 isActive(item.href) ? 'text-foreground' : 'text-foreground/60'
@@ -90,8 +104,16 @@ export function Header({ className, user }: HeaderProps) {
             onClick={() => setIsSearchOpen(!isSearchOpen)}
           >
             <Search className="h-5 w-5" />
-            <span className="sr-only">搜索</span>
+            <span className="sr-only">{t('common.search')}</span>
           </Button>
+
+          {/* RSS Subscribe */}
+          <div className="hidden md:flex">
+            <RSSButton size="sm" variant="ghost" showText={false} />
+          </div>
+
+          {/* Language switcher */}
+          <LanguageSwitcher />
 
           {/* Theme toggle */}
           <ThemeToggle />
@@ -122,21 +144,21 @@ export function Header({ className, user }: HeaderProps) {
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/profile" className="flex items-center">
+                  <Link href={buildHref('/profile')} className="flex items-center">
                     <User className="mr-2 h-4 w-4" />
-                    个人资料
+                    {t('navigation.profile')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard" className="flex items-center">
                     <PenSquare className="mr-2 h-4 w-4" />
-                    写文章
+                    {t('navigation.write_article')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <LogOut className="mr-2 h-4 w-4" />
-                  退出登录
+                  {t('navigation.logout')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -145,11 +167,11 @@ export function Header({ className, user }: HeaderProps) {
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/auth/signin">
                   <LogIn className="mr-2 h-4 w-4" />
-                  登录
+                  {t('navigation.login')}
                 </Link>
               </Button>
               <Button size="sm" asChild>
-                <Link href="/auth/signup">注册</Link>
+                <Link href="/auth/signup">{t('navigation.signup')}</Link>
               </Button>
             </div>
           )}
@@ -162,7 +184,7 @@ export function Header({ className, user }: HeaderProps) {
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            <span className="sr-only">切换菜单</span>
+            <span className="sr-only">{t('common.toggle_menu')}</span>
           </Button>
         </div>
       </div>
@@ -172,7 +194,7 @@ export function Header({ className, user }: HeaderProps) {
         <div className="hidden border-t px-4 py-3 md:block">
           <div className="container mx-auto max-w-2xl">
             <SearchInput
-              placeholder="搜索文章..."
+              placeholder={t('common.search_placeholder')}
               className="w-full"
               onBlur={() => setTimeout(() => setIsSearchOpen(false), 200)}
             />
@@ -185,14 +207,14 @@ export function Header({ className, user }: HeaderProps) {
         <div className="border-t bg-background md:hidden">
           <div className="container space-y-3 px-4 py-3">
             {/* Mobile search */}
-            <SearchInput placeholder="搜索文章..." className="w-full" />
+            <SearchInput placeholder={t('common.search_placeholder')} className="w-full" />
 
             {/* Mobile navigation */}
             <nav className="flex flex-col space-y-3">
               {navigation.map(item => (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={buildHref(item.href)}
                   className={cn(
                     'py-2 text-sm font-medium transition-colors hover:text-foreground/80',
                     isActive(item.href)
@@ -215,17 +237,17 @@ export function Header({ className, user }: HeaderProps) {
                     className="text-sm font-medium text-foreground/60 hover:text-foreground/80"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    个人资料
+                    {t('navigation.profile')}
                   </Link>
                   <Link
                     href="/dashboard"
                     className="text-sm font-medium text-foreground/60 hover:text-foreground/80"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    写文章
+                    {t('navigation.write_article')}
                   </Link>
                   <button className="text-left text-sm font-medium text-foreground/60 hover:text-foreground/80">
-                    退出登录
+                    {t('navigation.logout')}
                   </button>
                 </>
               ) : (
@@ -235,14 +257,14 @@ export function Header({ className, user }: HeaderProps) {
                     className="text-sm font-medium text-foreground/60 hover:text-foreground/80"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    登录
+                    {t('navigation.login')}
                   </Link>
                   <Link
                     href="/auth/signup"
                     className="text-sm font-medium text-foreground/60 hover:text-foreground/80"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    注册
+                    {t('navigation.signup')}
                   </Link>
                 </>
               )}

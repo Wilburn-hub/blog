@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PostService } from '@/lib/services/post.service'
-import { withOptionalAuth } from '@/lib/auth/middleware'
-import { addCORSHeaders, addSecurityHeaders, getClientIP } from '@/lib/auth/middleware'
+import { withOptionalAuth, withAuth } from '@/lib/auth/middleware'
+import { addCORSHeaders, addSecurityHeaders } from '@/lib/auth/middleware'
+import { getClientIP } from '@/lib/utils/rate-limiter'
 
 interface RouteParams {
   params: Promise<{ slug: string }>
@@ -227,18 +228,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   const resolvedParams = await params
-  return withOptionalAuth(
-    (req, context) => updatePostHandler(req, { ...context, params: resolvedParams }),
+  return withAuth(
+    (req, context) => updatePostHandler(req, { user: context.user, params: resolvedParams }),
     { required: true }
-  )(request, {})
+  )(request)
 }
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const resolvedParams = await params
-  return withOptionalAuth(
-    (req, context) => deletePostHandler(req, { ...context, params: resolvedParams }),
+  return withAuth(
+    (req, context) => deletePostHandler(req, { user: context.user, params: resolvedParams }),
     { required: true }
-  )(request, {})
+  )(request)
 }
 
 export function OPTIONS() {

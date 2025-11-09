@@ -52,7 +52,7 @@ async function getFileHandler(request: NextRequest, { params }: { params: { id: 
 
 async function deleteFileHandler(
   request: NextRequest,
-  { user }: { user: any; params: { id: string } }
+  { user, params }: { user: any; params: { id: string } }
 ) {
   const startTime = Date.now()
 

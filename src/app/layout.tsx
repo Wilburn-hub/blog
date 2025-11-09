@@ -2,11 +2,6 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 
-import { ThemeProvider } from '@/contexts/theme-context'
-import { Toaster } from '@/components/ui/toaster'
-import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
-
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -47,25 +42,12 @@ export const metadata: Metadata = {
   },
 }
 
+// Root layout - will be used for the root page only
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
+    <html suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <div className="min-h-screen bg-background font-sans antialiased">
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main className="flex-1">{children}</main>
-              <Footer />
-            </div>
-            <Toaster />
-          </div>
-        </ThemeProvider>
+        {children}
       </body>
     </html>
   )

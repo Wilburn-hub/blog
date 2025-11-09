@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate request body
-    const validation = await validateRequest(loginSchema)
+    const validation = await validateRequest(loginSchema)(request)
     if (!validation.success) {
       const response = NextResponse.json(
         { error: validation.error.message, details: validation.error.details },

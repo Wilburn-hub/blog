@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     const response = NextResponse.json({
       popularSearches,
-      count: popularSearches.length,
+      count: Array.isArray(popularSearches) ? popularSearches.length : 0,
     })
 
     // Add security headers

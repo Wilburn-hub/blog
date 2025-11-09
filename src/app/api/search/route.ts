@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { SearchService } from '@/lib/services/search.service'
-import { searchSchema, validateRequest } from '@/lib/utils/validation'
+import { searchSchema, validateInput, validateRequest } from '@/lib/utils/validation'
 import { rateLimiter, RATE_LIMITS, getClientIP } from '@/lib/utils/rate-limiter'
 import { addCORSHeaders, addSecurityHeaders } from '@/lib/auth/middleware'
 
@@ -47,7 +47,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Perform search
-    const results = await SearchService.search(validation)
+    const results = await SearchService.search({
+      query: validation.q,
+      type: validation.type,
+      page: validation.page,
+      limit: validation.limit,
+    })
 
     const response = NextResponse.json(results)
 

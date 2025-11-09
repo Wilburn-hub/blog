@@ -176,3 +176,207 @@ export interface SeoData {
   }
   jsonLd?: Record<string, any>
 }
+
+// 标签相关类型定义
+export interface Tag {
+  name: string
+  count: number
+  slug?: string
+}
+
+export interface TagWithPosts extends Tag {
+  posts: PostWithAuthor[]
+  pagination?: {
+    page: number
+    limit: number
+    total: number
+    pages: number
+  }
+}
+
+export interface TagCloudItem extends Tag {
+  size: 'sm' | 'md' | 'lg' | 'xl'
+  weight: number
+}
+
+export interface TagSearchParams {
+  q?: string
+  sort?: 'name' | 'count' | 'recent'
+  order?: 'asc' | 'desc'
+  page?: number
+  limit?: number
+}
+
+export interface TagStats {
+  totalTags: number
+  totalPosts: number
+  averagePostsPerTag: number
+  mostPopularTag: Tag
+  recentTags: Tag[]
+}
+
+// RSS 相关类型定义
+export interface RSSFeedInfo {
+  title: string
+  description: string
+  link: string
+  language: string
+  copyright?: string
+  managingEditor?: string
+  webMaster?: string
+  pubDate?: Date
+  lastBuildDate?: Date
+  categories?: string[]
+  generator?: string
+  docs?: string
+  cloud?: {
+    domain: string
+    port: number
+    path: string
+    registerProcedure: string
+    protocol: 'soap' | 'xml-rpc'
+  }
+  ttl?: number
+  image?: {
+    url: string
+    title: string
+    link: string
+    width?: number
+    height?: number
+    description?: string
+  }
+  skipHours?: number[]
+  skipDays?: string[]
+}
+
+export interface RSSItem {
+  title: string
+  link: string
+  description: string
+  content?: string
+  pubDate: Date
+  guid?: {
+    value: string
+    isPermaLink?: boolean
+  }
+  author?: string
+  categories?: string[]
+  comments?: string
+  enclosure?: {
+    url: string
+    type: string
+    length?: number
+  }
+  source?: {
+    url: string
+    title: string
+  }
+}
+
+export interface RSSFeed {
+  rss: {
+    '@version': string
+    channel: {
+      title: string
+      description: string
+      link: string
+      language: string
+      copyright?: string
+      managingEditor?: string
+      webMaster?: string
+      pubDate?: string
+      lastBuildDate?: string
+      generator?: string
+      docs?: string
+      ttl?: string
+      image?: {
+        url: string
+        title: string
+        link: string
+        width?: string
+        height?: string
+        description?: string
+      }
+      item: RSSItem[]
+    }
+  }
+}
+
+export interface JSONFeed {
+  version: string
+  title: string
+  home_page_url?: string
+  feed_url?: string
+  description: string
+  user_comment?: string
+  next_url?: string
+  icon?: string
+  favicon?: string
+  author?: {
+    name: string
+    url?: string
+    avatar?: string
+  }
+  expired?: boolean
+  items: JSONFeedItem[]
+}
+
+export interface JSONFeedItem {
+  id: string
+  url: string
+  external_url?: string
+  title: string
+  content_html?: string
+  content_text?: string
+  summary?: string
+  image?: string
+  banner_image?: string
+  date_published: string
+  date_modified?: string
+  author?: {
+    name: string
+    url?: string
+    avatar?: string
+  }
+  tags?: string[]
+  language?: string
+  attachments?: Array<{
+    url: string
+    mime_type: string
+    title?: string
+    size_in_bytes?: number
+    duration_in_seconds?: number
+  }>
+}
+
+export interface RSSConfig {
+  enabled: boolean
+  maxItems: number
+  includeContent: boolean
+  contentLength: number
+  includeAuthor: boolean
+  includeCategories: boolean
+  includeImages: boolean
+  cacheTTL: number
+  feedInfo: Partial<RSSFeedInfo>
+}
+
+export interface RSSFeedOptions {
+  type: 'rss' | 'json'
+  limit?: number
+  category?: string
+  tag?: string
+  author?: string
+  featured?: boolean
+}
+
+export interface RSSAnalytics {
+  totalRequests: number
+  uniqueIPs: number
+  lastAccessed: Date
+  popularFeeds: Array<{
+    type: string
+    params: string
+    count: number
+  }>
+}

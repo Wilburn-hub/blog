@@ -1,0 +1,179 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "search": "Search",
+    "search_placeholder": "Search articles...",
+    "read_more": "Read more",
+    "back_to_top": "Back to top",
+    "copy": "Copy",
+    "copied": "Copied",
+    "share": "Share",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "publish": "Publish",
+    "draft": "Draft",
+    "published": "Published",
+    "unpublished": "Unpublished",
+    "close": "Close",
+    "open": "Open",
+    "menu": "Menu",
+    "toggle_menu": "Toggle menu"
+  },
+  "navigation": {
+    "home": "Home",
+    "posts": "Posts",
+    "categories": "Categories",
+    "tags": "Tags",
+    "subscribe": "Subscribe",
+    "about": "About",
+    "profile": "Profile",
+    "write_article": "Write Article",
+    "login": "Login",
+    "logout": "Logout",
+    "signup": "Sign Up"
+  },
+  "language": {
+    "switch_language": "Switch Language",
+    "zh": "中文",
+    "en": "English",
+    "ja": "日本語"
+  },
+  "home": {
+    "hero_title": "Welcome to My Personal Blog",
+    "hero_subtitle": "A place to share technology, life, and thoughts",
+    "latest_posts": "Latest Posts",
+    "featured_posts": "Featured Posts",
+    "view_all_posts": "View All Posts",
+    "no_posts_found": "No posts found",
+    "no_posts_description": "No articles have been published yet. Please check back later."
+  },
+  "posts": {
+    "all_posts": "All Posts",
+    "no_posts": "No posts",
+    "no_posts_description": "There are no posts in this category yet.",
+    "related_posts": "Related Posts",
+    "published_on": "Published on",
+    "updated_on": "Updated on",
+    "reading_time": "Reading time",
+    "minutes": "minutes",
+    "views": "Views",
+    "likes": "Likes",
+    "comments": "Comments",
+    "category": "Category",
+    "tags": "Tags",
+    "author": "Author",
+    "share_post": "Share Post",
+    "table_of_contents": "Table of Contents"
+  },
+  "categories": {
+    "all_categories": "All Categories",
+    "no_categories": "No categories",
+    "no_categories_description": "No categories have been created yet.",
+    "posts_in_category": "{count} posts",
+    "one_post_in_category": "1 post"
+  },
+  "tags": {
+    "all_tags": "All Tags",
+    "no_tags": "No tags",
+    "no_tags_description": "No tags have been created yet.",
+    "posts_with_tag": "{count} posts",
+    "one_post_with_tag": "1 post",
+    "popular_tags": "Popular Tags",
+    "search_tags": "Search Tags"
+  },
+  "about": {
+    "page_title": "About Me",
+    "introduction": "Hello! I'm a developer who loves technology and sharing.",
+    "skills_title": "Skills",
+    "experience_title": "Work Experience",
+    "education_title": "Education",
+    "contact_title": "Contact",
+    "download_cv": "Download CV"
+  },
+  "auth": {
+    "sign_in": "Sign In",
+    "sign_up": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "confirm_password": "Confirm Password",
+    "remember_me": "Remember me",
+    "forgot_password": "Forgot password?",
+    "no_account": "Don't have an account?",
+    "have_account": "Already have an account?",
+    "sign_in_error": "Sign in failed",
+    "sign_up_error": "Sign up failed",
+    "invalid_credentials": "Invalid email or password",
+    "password_mismatch": "Passwords do not match"
+  },
+  "profile": {
+    "page_title": "Profile",
+    "edit_profile": "Edit Profile",
+    "username": "Username",
+    "display_name": "Display Name",
+    "bio": "Bio",
+    "website": "Website",
+    "location": "Location",
+    "update_profile": "Update Profile",
+    "profile_updated": "Profile updated"
+  },
+  "dashboard": {
+    "page_title": "Dashboard",
+    "overview": "Overview",
+    "posts_management": "Posts Management",
+    "categories_management": "Categories Management",
+    "settings": "Settings",
+    "create_post": "Create Post",
+    "edit_post": "Edit Post",
+    "post_title": "Post Title",
+    "post_content": "Post Content",
+    "post_excerpt": "Post Excerpt",
+    "featured_image": "Featured Image",
+    "seo_title": "SEO Title",
+    "seo_description": "SEO Description",
+    "select_category": "Select Category",
+    "add_tags": "Add Tags",
+    "post_published": "Post published",
+    "post_saved": "Post saved"
+  },
+  "footer": {
+    "copyright": "© {year} {name}. All rights reserved.",
+    "powered_by": "Powered by {technology}",
+    "social_links": "Social Links"
+  },
+  "search": {
+    "page_title": "Search",
+    "search_query": "Search Query",
+    "search_results": "Search Results",
+    "no_results": "No results found",
+    "no_results_description": "Please try searching with different keywords.",
+    "found_results": "Found {count} results",
+    "found_one_result": "Found 1 result"
+  },
+  "subscribe": {
+    "page_title": "Subscribe",
+    "email_subscription": "Email Subscription",
+    "email_placeholder": "Enter your email address",
+    "subscribe_button": "Subscribe Now",
+    "subscribe_success": "Subscription successful!",
+    "subscribe_error": "Subscription failed, please try again.",
+    "already_subscribed": "You are already subscribed.",
+    "invalid_email": "Please enter a valid email address.",
+    "rss_feed": "RSS Feed",
+    "rss_description": "Subscribe to our blog via RSS reader"
+  },
+  "error": {
+    "404_title": "Page Not Found",
+    "404_description": "Sorry, the page you are looking for does not exist.",
+    "500_title": "Server Error",
+    "500_description": "Sorry, the server encountered some problems.",
+    "back_home": "Back to Home"
+  },
+  "seo": {
+    "default_title": "Personal Blog",
+    "default_description": "A modern personal blog built with Next.js, TypeScript, and Tailwind CSS",
+    "site_name": "Personal Blog"
+  }
+}

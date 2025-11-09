@@ -47,7 +47,7 @@ async function getCommentsHandler(request: NextRequest) {
         limit,
         postId,
         authorId,
-        parentId: parentId === 'null' ? null : parentId,
+        parentId: parentId === 'null' ? undefined : parentId,
         sortBy,
       })
     }
@@ -91,7 +91,7 @@ async function createCommentHandler(request: NextRequest, { user }: { user: any 
     }
 
     // Validate request body
-    const validation = await validateRequest(createCommentSchema)
+    const validation = await validateRequest(createCommentSchema)(request)
     if (!validation.success) {
       const response = NextResponse.json(
         { error: validation.error.message, details: validation.error.details },

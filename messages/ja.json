@@ -1,0 +1,179 @@
+{
+  "common": {
+    "loading": "読み込み中...",
+    "search": "検索",
+    "search_placeholder": "記事を検索...",
+    "read_more": "続きを読む",
+    "back_to_top": "トップに戻る",
+    "copy": "コピー",
+    "copied": "コピーしました",
+    "share": "共有",
+    "cancel": "キャンセル",
+    "confirm": "確認",
+    "save": "保存",
+    "edit": "編集",
+    "delete": "削除",
+    "publish": "公開",
+    "draft": "下書き",
+    "published": "公開済み",
+    "unpublished": "非公開",
+    "close": "閉じる",
+    "open": "開く",
+    "menu": "メニュー",
+    "toggle_menu": "メニューを切り替え"
+  },
+  "navigation": {
+    "home": "ホーム",
+    "posts": "記事",
+    "categories": "カテゴリー",
+    "tags": "タグ",
+    "subscribe": "購読",
+    "about": "について",
+    "profile": "プロフィール",
+    "write_article": "記事を書く",
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "signup": "登録"
+  },
+  "language": {
+    "switch_language": "言語を切り替え",
+    "zh": "中文",
+    "en": "English",
+    "ja": "日本語"
+  },
+  "home": {
+    "hero_title": "私の個人ブログへようこそ",
+    "hero_subtitle": "テクノロジー、生活、思考を共有する場所",
+    "latest_posts": "最新記事",
+    "featured_posts": "注目記事",
+    "view_all_posts": "すべての記事を見る",
+    "no_posts_found": "記事が見つかりません",
+    "no_posts_description": "まだ記事が公開されていません。後でもう一度確認してください。"
+  },
+  "posts": {
+    "all_posts": "すべての記事",
+    "no_posts": "記事がありません",
+    "no_posts_description": "このカテゴリーにはまだ記事がありません。",
+    "related_posts": "関連記事",
+    "published_on": "公開日",
+    "updated_on": "更新日",
+    "reading_time": "読了時間",
+    "minutes": "分",
+    "views": "閲覧",
+    "likes": "いいね",
+    "comments": "コメント",
+    "category": "カテゴリー",
+    "tags": "タグ",
+    "author": "著者",
+    "share_post": "記事を共有",
+    "table_of_contents": "目次"
+  },
+  "categories": {
+    "all_categories": "すべてのカテゴリー",
+    "no_categories": "カテゴリーがありません",
+    "no_categories_description": "まだカテゴリーが作成されていません。",
+    "posts_in_category": "{count} 記事",
+    "one_post_in_category": "1 記事"
+  },
+  "tags": {
+    "all_tags": "すべてのタグ",
+    "no_tags": "タグがありません",
+    "no_tags_description": "まだタグが作成されていません。",
+    "posts_with_tag": "{count} 記事",
+    "one_post_with_tag": "1 記事",
+    "popular_tags": "人気タグ",
+    "search_tags": "タグを検索"
+  },
+  "about": {
+    "page_title": "私について",
+    "introduction": "こんにちは！テクノロジーと共有を愛する開発者です。",
+    "skills_title": "スキル",
+    "experience_title": "職務経歴",
+    "education_title": "学歴",
+    "contact_title": "連絡先",
+    "download_cv": "履歴書をダウンロード"
+  },
+  "auth": {
+    "sign_in": "ログイン",
+    "sign_up": "登録",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "confirm_password": "パスワードを確認",
+    "remember_me": "ログイン状態を保持",
+    "forgot_password": "パスワードを忘れましたか？",
+    "no_account": "アカウントをお持ちでない方",
+    "have_account": "アカウントをお持ちの方",
+    "sign_in_error": "ログインに失敗しました",
+    "sign_up_error": "登録に失敗しました",
+    "invalid_credentials": "メールアドレスまたはパスワードが正しくありません",
+    "password_mismatch": "パスワードが一致しません"
+  },
+  "profile": {
+    "page_title": "プロフィール",
+    "edit_profile": "プロフィールを編集",
+    "username": "ユーザー名",
+    "display_name": "表示名",
+    "bio": "自己紹介",
+    "website": "ウェブサイト",
+    "location": "場所",
+    "update_profile": "プロフィールを更新",
+    "profile_updated": "プロフィールが更新されました"
+  },
+  "dashboard": {
+    "page_title": "ダッシュボード",
+    "overview": "概要",
+    "posts_management": "記事管理",
+    "categories_management": "カテゴリー管理",
+    "settings": "設定",
+    "create_post": "記事を作成",
+    "edit_post": "記事を編集",
+    "post_title": "記事タイトル",
+    "post_content": "記事内容",
+    "post_excerpt": "記事抜粋",
+    "featured_image": "アイキャッチ画像",
+    "seo_title": "SEOタイトル",
+    "seo_description": "SEO説明",
+    "select_category": "カテゴリーを選択",
+    "add_tags": "タグを追加",
+    "post_published": "記事を公開しました",
+    "post_saved": "記事を保存しました"
+  },
+  "footer": {
+    "copyright": "© {year} {name}. すべての権利を保有。",
+    "powered_by": "{technology} を搭載",
+    "social_links": "ソーシャルリンク"
+  },
+  "search": {
+    "page_title": "検索",
+    "search_query": "検索クエリ",
+    "search_results": "検索結果",
+    "no_results": "結果が見つかりません",
+    "no_results_description": "別のキーワードで検索してみてください。",
+    "found_results": "{count} 件の結果が見つかりました",
+    "found_one_result": "1 件の結果が見つかりました"
+  },
+  "subscribe": {
+    "page_title": "購読",
+    "email_subscription": "メール購読",
+    "email_placeholder": "メールアドレスを入力してください",
+    "subscribe_button": "今すぐ購読",
+    "subscribe_success": "購読ありがとうございます！",
+    "subscribe_error": "購読に失敗しました。もう一度お試しください。",
+    "already_subscribed": "すでに購読されています。",
+    "invalid_email": "有効なメールアドレスを入力してください。",
+    "rss_feed": "RSSフィード",
+    "rss_description": "RSSリーダーでブログを購読"
+  },
+  "error": {
+    "404_title": "ページが見つかりません",
+    "404_description": "申し訳ありません、お探しのページは存在しません。",
+    "500_title": "サーバーエラー",
+    "500_description": "申し訳ありません、サーバーで問題が発生しました。",
+    "back_home": "ホームに戻る"
+  },
+  "seo": {
+    "default_title": "個人ブログ",
+    "default_description": "Next.js、TypeScript、Tailwind CSSで構築されたモダンな個人ブログ",
+    "site_name": "個人ブログ"
+  }
+}

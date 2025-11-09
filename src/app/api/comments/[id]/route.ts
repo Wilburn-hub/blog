@@ -60,7 +60,7 @@ async function updateCommentHandler(
     }
 
     // Validate request body
-    const validation = await validateRequest(updateCommentSchema)
+    const validation = await validateRequest(updateCommentSchema)(request)
     if (!validation.success) {
       const response = NextResponse.json(
         { error: validation.error.message, details: validation.error.details },

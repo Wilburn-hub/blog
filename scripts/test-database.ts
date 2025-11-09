@@ -434,7 +434,7 @@ class DatabaseTester {
       await cache.set(testKey, testValue, cacheTTL.SHORT)
       const retrievedValue = await cache.get(testKey)
 
-      if (!retrievedValue || retrievedValue.message !== testValue.message) {
+      if (!retrievedValue || (retrievedValue as any).message !== testValue.message) {
         throw new Error('Cache set/get failed')
       }
 

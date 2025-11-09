@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PostService } from '@/lib/services/post.service'
-import { withOptionalAuth } from '@/lib/auth/middleware'
+import { withOptionalAuth, withAuth } from '@/lib/auth/middleware'
 import { addCORSHeaders, addSecurityHeaders } from '@/lib/auth/middleware'
 
 async function getPostsHandler(request: NextRequest, { user }: { user?: any }) {
@@ -117,7 +117,7 @@ async function createPostHandler(request: NextRequest, { user }: { user: any }) 
 }
 
 export const GET = withOptionalAuth(getPostsHandler)
-export const POST = withOptionalAuth(createPostHandler, { required: true })
+export const POST = withAuth(createPostHandler, { required: true })
 
 export function OPTIONS() {
   const response = new NextResponse(null, { status: 200 })
