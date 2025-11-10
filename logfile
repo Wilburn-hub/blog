@@ -136,3 +136,13 @@
 2025-11-10 01:27:02.551 CST [25827] LOG:  could not receive data from client: Connection reset by peer
 2025-11-10 01:27:02.551 CST [25826] LOG:  could not receive data from client: Connection reset by peer
 2025-11-10 01:27:02.570 CST [25833] LOG:  could not receive data from client: Connection reset by peer
+2025-11-10 18:32:22.274 CST [29702] FATAL:  database "personal_blog_dev" does not exist
+2025-11-10 18:32:37.913 CST [30472] FATAL:  database "personal_blog_dev" does not exist
+2025-11-10 18:32:46.328 CST [30896] FATAL:  database "personal_blog_dev" does not exist
+2025-11-10 18:38:43.125 CST [49686] LOG:  could not receive data from client: Connection reset by peer
+2025-11-10 18:38:43.586 CST [49732] FATAL:  terminating connection due to administrator command
+2025-11-10 18:38:48.654 CST [49992] LOG:  could not receive data from client: Connection reset by peer
+2025-11-10 18:38:54.623 CST [50331] ERROR:  table "_prisma_migrations" does not exist
+2025-11-10 18:38:54.623 CST [50331] STATEMENT:  DROP TABLE _prisma_migrations
+2025-11-10 18:39:57.654 CST [39866] ERROR:  relation "public._prisma_migrations" does not exist at character 15
+2025-11-10 18:39:57.654 CST [39866] STATEMENT:  SELECT * FROM "public"."_prisma_migrations" LIMIT 0

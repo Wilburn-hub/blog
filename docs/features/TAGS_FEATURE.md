@@ -5,6 +5,7 @@
 ## 功能概览
 
 ### 核心功能
+
 - 🏷️ **标签管理**: 创建、查看、搜索和组织标签
 - ☁️ **标签云**: 可视化展示标签，支持不同大小和颜色
 - 🔍 **标签搜索**: 实时搜索和过滤标签
@@ -13,6 +14,7 @@
 - 📱 **响应式设计**: 支持移动端和桌面端
 
 ### SEO优化
+
 - ✅ 动态生成meta标签
 - ✅ 结构化数据支持
 - ✅ 友好的URL结构
@@ -53,6 +55,7 @@ src/
 获取所有标签，支持搜索和排序。
 
 **查询参数:**
+
 - `q` (string): 搜索关键词
 - `sort` (string): 排序方式 (name, count, recent)
 - `order` (string): 排序顺序 (asc, desc)
@@ -60,6 +63,7 @@ src/
 - `limit` (number): 每页数量
 
 **响应示例:**
+
 ```json
 {
   "tags": [
@@ -90,6 +94,7 @@ src/
 获取指定标签的文章列表。
 
 **查询参数:**
+
 - `page` (number): 页码
 - `limit` (number): 每页数量
 
@@ -102,16 +107,17 @@ src/
 ```tsx
 import { TagPill } from '@/components/ui/tag-pill'
 
-<TagPill
+;<TagPill
   tag={{ name: 'React', count: 15 }}
   variant="default"
   showCount={true}
   clickable={true}
-  onClick={(tag) => console.log(tag)}
+  onClick={tag => console.log(tag)}
 />
 ```
 
 **Props:**
+
 - `tag` (Tag): 标签对象
 - `variant` ('default' | 'small' | 'large'): 显示样式
 - `showCount` (boolean): 是否显示文章数量
@@ -125,16 +131,17 @@ import { TagPill } from '@/components/ui/tag-pill'
 ```tsx
 import { TagCloud } from '@/components/ui/tag-cloud'
 
-<TagCloud
+;<TagCloud
   initialTags={tags}
   maxTags={50}
   showSearch={true}
   showStats={true}
-  onTagClick={(tag) => navigate(`/tags/${tag}`)}
+  onTagClick={tag => navigate(`/tags/${tag}`)}
 />
 ```
 
 **Props:**
+
 - `initialTags` (TagCloudItem[]): 初始标签数据
 - `maxTags` (number): 最大显示数量
 - `showSearch` (boolean): 是否显示搜索框
@@ -148,11 +155,11 @@ import { TagCloud } from '@/components/ui/tag-cloud'
 ```tsx
 import { TagSearch } from '@/components/ui/tag-search'
 
-<TagSearch
+;<TagSearch
   placeholder="搜索标签..."
   maxResults={10}
   excludeTags={['existing-tag']}
-  onTagSelect={(tag) => console.log(tag)}
+  onTagSelect={tag => console.log(tag)}
 />
 ```
 
@@ -163,7 +170,7 @@ import { TagSearch } from '@/components/ui/tag-search'
 ```tsx
 import { PostTags } from '@/components/blog/post-tags'
 
-<PostTags
+;<PostTags
   tags={['React', 'JavaScript', 'TypeScript']}
   variant="pill"
   maxTags={5}
@@ -202,6 +209,7 @@ const popularTags = await PostService.getPopularTags(30, 15)
 ### /tags - 标签列表页面
 
 显示所有标签的标签云页面，包含：
+
 - 标签云可视化
 - 搜索和过滤功能
 - 热门标签排行
@@ -210,6 +218,7 @@ const popularTags = await PostService.getPopularTags(30, 15)
 ### /tags/[tag] - 标签详情页面
 
 显示特定标签的文章列表，包含：
+
 - 标签信息展示
 - 分页文章列表
 - 相关标签推荐
@@ -246,16 +255,19 @@ interface TagStats {
 ## 性能优化
 
 ### 缓存策略
+
 - Redis缓存标签数据（1小时）
 - 页面级静态生成（SSG）
 - 客户端组件缓存
 
 ### 懒加载
+
 - 标签云组件支持懒加载
 - 搜索结果防抖处理
 - 分页数据按需加载
 
 ### 数据库优化
+
 - 标签查询索引优化
 - 批量数据处理
 - 查询结果限制
@@ -263,6 +275,7 @@ interface TagStats {
 ## SEO最佳实践
 
 ### 元数据优化
+
 ```tsx
 export async function generateMetadata({ params }): Promise<Metadata> {
   return {
@@ -273,17 +286,19 @@ export async function generateMetadata({ params }): Promise<Metadata> {
       title: `${tagName} - 博客标签`,
       description: `浏览标签 "${tagName}" 下的文章`,
       url: `/tags/${tag}`,
-    }
+    },
   }
 }
 ```
 
 ### URL结构
+
 - 简洁友好的URL格式
 - 自动处理特殊字符编码
 - 支持中文标签
 
 ### 结构化数据
+
 - JSON-LD格式的结构化数据
 - 面包屑导航支持
 - 文章列表语义化标记
@@ -291,11 +306,13 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 ## 样式定制
 
 ### 主题支持
+
 - 明暗主题自动适配
 - CSS变量自定义颜色
 - 响应式断点配置
 
 ### 自定义样式
+
 ```css
 /* 自定义标签颜色 */
 .tag-pill {
@@ -311,16 +328,19 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 ## 测试建议
 
 ### 单元测试
+
 - 标签组件渲染测试
 - API接口响应测试
 - 工具函数测试
 
 ### 集成测试
+
 - 页面路由测试
 - 搜索功能测试
 - 分页功能测试
 
 ### E2E测试
+
 - 标签点击跳转
 - 搜索交互流程
 - 响应式布局测试
@@ -348,12 +368,14 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 ## 更新日志
 
 ### v1.0.0 (当前版本)
+
 - ✅ 完整的标签功能实现
 - ✅ API接口和页面组件
 - ✅ SEO优化和性能优化
 - ✅ 响应式设计和主题支持
 
 ### 计划功能
+
 - 🔄 标签管理后台
 - 🔄 标签导入/导出
 - 🔄 标签合并功能
